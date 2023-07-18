@@ -54,7 +54,7 @@ class recipe_management(): #Class for management of receipes
     def add_recipe():
         recipe_name = input("Enter recipe name: ")
         recipe_ingredients = input("Enter ingredients (separated by commas): ").split(",")
-        recipe_instructions = input("Enter instructions: ")
+        recipe_instructions = input("Enter cooking instructions: ")
         recipe_cooking_time = input("Enter cooking time: ")
         recipe_dietary = input("Enter dietary info: ")
 
@@ -96,7 +96,7 @@ def update_recipe():
             print("4. Delete recipe")
             print("5. Exit")
 
-            option = input("Enter your option (1-4): ")
+            option = input("Enter your option (1-5): ")
 
             if option == "1":
                 add_recipe()
