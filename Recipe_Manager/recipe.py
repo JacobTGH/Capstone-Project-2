@@ -1,3 +1,5 @@
+import tkinter as tk
+from PIL import ImageTk, Image #load image and place in frame - logo widget
 
 class Recipe(): # Creating the recipe class
     
@@ -39,77 +41,157 @@ class Recipe(): # Creating the recipe class
         return self.dietary_info
 
     def get_details(self): # Function for displaying all of the information in the recipe
-        print(f"Recipe: {self.title} \n"
-              f"Dietary information: {self.dietary_info} \n"
-              f"This recipe takes {self.cooking_time} minutes to cook")
-        print("The ingredients are: " + ', '.join(self.ingredients).capitalize())        
-        length = len(self.instructions)
-        for i in range(length):
-            i = int(i)
-            print(f"{i + 1}. {self.instructions[i].capitalize()}")
-            
-recipes = {} #Dictionary to store the recipes
+        return f"Recipe: {self.title} \n" \
+            f"Dietary information: {self.dietary_info} \n" \
+            f"This recipe takes {self.cooking_time} minutes to cook\n" \
+            f"The ingredients are: {', '.join(self.ingredients).capitalize()}\n" \
+            f"Instructions:\n" + "\n".join(f"{i+1}. {ins.captalize()}" for i, ins in enumerate(self.instructions))        
 
-class recipe_management(): #Class for management of receipes
-    def add_recipe():
-        recipe_name = input("Enter recipe name: ")
-        recipe_ingredients = input("Enter ingredients (separated by commas): ").split(",")
-        recipe_instructions = input("Enter cooking instructions: ")
-        recipe_cooking_time = input("Enter cooking time: ")
-        recipe_dietary = input("Enter dietary info: ")
+# Recipe Manager
+class RecipeManager:
+    def __init__(self):
+        self.recipes = [] #save recipes
 
-        recipe = {
-            "Name" : recipe_name,
-            "Ingredients" : recipe_ingredients,
-            "Instructions" : recipe_instructions,
-            "Cooking time" : recipe_cooking_time,
-            "Dietary" : recipe_dietary
-        }
-        recipes[recipe_name] = recipe
-        print ("Recipe add with success!")
+    def add_recipe(self, recipe):
+        self.recipes.append(recipe)
+
+    def remove_recipe(self, recipe_name):
+        for recipe in self.recipes:
+            if recipe.get_title().lower() == recipe_name.lower():
+                self.recipes.remove(recipe)
+                return True
+        return False
+
+    def search_recipe(self, keyword):
+        found_recipes = []
+        for recipe in self.recipes:
+            if keyword.lower() in recipe.get_title().lower():
+                found_recipes.append(recipe)
+        return found_recipes
+
+#initiallize
+window = tk.Tk()
+window.title("Recipe Management System")
+window.eval("tk::PlaceWindow . center") #window will open on centre of the screeen
+bg_colour = "black"
+
+#FRAME WIDGET: groups widgets 
+frame1 = tk.Frame(window, width = 500, height = 600, bg = bg_colour) #change the colour later
+frame1.grid(row=0, column=0)
+frame1.pack_propagate(False) #background colour to all page
+
+#frame1 widgets
+# logo_img = ImageTk.PhotoImage(Image.open('logo.png').convert('RGB'))
+# logo_widget = tk.Label(frame1, image = logo_img) # converting to widget, tkinter doesn't have an specific
+# logo_widget.image = logo_img
+# logo_widget.pack() #place widget in frame
+
+tk.Label(frame1,
+         text = "Recipe Management System",
+         bg = bg_colour,
+         fg = "white",
+         font = ("TkMenuFont", 14)
+         ).pack()
+
+# Initialize recipe manager
+recipe_manager = RecipeManager()
+
+# GUI Functions
+def add_recipe():
+    title = recipe_title.get()
+    ingredients = recipe_ingredients.get().split(',')
+    instructions = recipe_instructions.get("1.0", tk.END).split('\n')
+    cooking_time = recipe_cooking_time.get()
+    dietary_info = recipe_dietary_info.get()
+
+    recipe = Recipe(title, ingredients, instructions, cooking_time, dietary_info)
+    recipe_manager.add_recipe(recipe)
+
+    recipe_title.delete(0, tk.END)
+    recipe_ingredients.delete(0, tk.END)
+    recipe_instructions.delete("1.0", tk.END)
+    recipe_cooking_time.delete(0, tk.END)
+    recipe_dietary_info.delete(0, tk.END)
+
+    update_recipe_listbox()
+
+def search_recipe():
+    keyword = search_keyword.get()
+    found_recipes = recipe_manager.search_recipe(keyword)
+
+    search_results.delete("1.0", tk.END)
+    if found_recipes:
+        for recipe in found_recipes:
+            search_results.insert(tk.END, recipe.get_details() + "\n\n")
+    else:
+        search_results.insert(tk.END, "No recipes found with the given keyword!")
 
 def update_recipe():
- #options to choose what want to update and then show the existing information to update (?)
+    selected_recipe = recipe_listbox.get(tk.ACTIVE)
+    if selected_recipe:
+        new_title = recipe_title.get()
+        new_ingredients = recipe_ingredients.get().split(',')
+        new_instructions = recipe_instructions.get("1.0", tk.END).split('\n')
+        new_cooking_time = recipe_cooking_time.get()
+        new_dietary_info = recipe_dietary_info.get()
 
- def view_recipe(recipe_name):
-    if recipe_name in recipes:
-        recipe = recipes[recipe_name]
-        print(f"Recipe: {recipe_name}")
-        print(f"Ingredients: {recipe['Ingredients']}")
-        print(f"Instructions: {recipe['Instructions']}")
-        print(f"Cooking time: {recipe['Cooking time']}")
-        print(f"Dietary: {recipe['Dietary']}")
+        for recipe in recipe_manager.recipes:
+            if recipe.get_title() == selected_recipe:
+                recipe.set_title(new_title)
+                recipe.set_ingredients(new_ingredients)
+                recipe.set_instructions(new_instructions)
+                recipe.set_cooking_time(new_cooking_time)
+                recipe.set_dietary_info(new_dietary_info)
 
-    def delete_recipe():
-        if recipe_name in recipes:
-            del recipes[recipe_name]
-            print("Recipe deleted!")
-        else:
-            print("Recipe could not be found. Try again.")
+        recipe_title.delete(0, tk.END)
+        recipe_ingredients.delete(0, tk.END)
+        recipe_instructions.delete("1.0", tk.END)
+        recipe_cooking_time.delete(0, tk.END)
+        recipe_dietary_info.delete(0, tk.END)
 
-    def menu():
-        while True:
-            print("--- Recipe system Management ---")
-            print("1. Add recipe")
-            print("2. Update recipe details")
-            print("3. View recipe")
-            print("4. Delete recipe")
-            print("5. Exit")
+        update_recipe_listbox()
 
-            option = input("Enter your option (1-5): ")
 
-            if option == "1":
-                add_recipe()
-            elif option == "2":
-                recipe_name = input("Enter recipe name:")
-                update_recipe(recipe_name)
-            elif option == "3":
-                recipe_name = input("Enter recipe name: ")
-                view_recipe(recipe_name)
-            elif option == "4":
-                recipe_name = input("Enter recipe name: ")
-                delete_recipe(recipe_name)
-            elif option == "5":
-                break
-            else:
-                print("Invalid option. Choose option 1, 2, 3, 4 or 5.")
+# GUI Elements for adding and searching and updating recipes
+update_button = tk.Button(frame1, text="Update Recipe", command=update_recipe)
+update_button.pack()
+
+recipe_title = tk.Entry(frame1)
+recipe_title.pack()
+
+recipe_ingredients = tk.Entry(frame1)
+recipe_ingredients.pack()
+
+recipe_instructions = tk.Text(frame1, width=40, height=10)
+recipe_instructions.pack()
+
+recipe_cooking_time = tk.Entry(frame1)
+recipe_cooking_time.pack()
+
+recipe_dietary_info = tk.Entry(frame1)
+recipe_dietary_info.pack()
+
+add_button = tk.Button(frame1, text="Add Recipe", command=add_recipe)
+add_button.pack()
+
+search_keyword = tk.Entry(frame1)
+search_keyword.pack()
+
+search_button = tk.Button(frame1, text="Search Recipe", command=search_recipe)
+search_button.pack()
+
+search_results = tk.Text(frame1, width=40, height=10)
+search_results.pack()
+
+recipe_listbox = tk.Listbox(frame1, width=40, height=10)
+recipe_listbox.pack()
+
+def update_recipe_listbox():
+    recipe_listbox.delete(0, tk.END)
+    for recipe in recipe_manager.recipes:
+        recipe_listbox.insert(tk.END, recipe.get_title())
+
+update_recipe_listbox()
+
+#run
+window.mainloop() #displays app until the user closes it
